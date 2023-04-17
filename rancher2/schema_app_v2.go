@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	norman "github.com/rancher/norman/types"
-	"github.com/rancher/rancher/pkg/apis/catalog.cattle.io/v1"
+	v1 "github.com/rancher/rancher/pkg/apis/catalog.cattle.io/v1"
 )
 
 const (
@@ -127,6 +127,12 @@ func appV2Fields() map[string]*schema.Schema {
 			Optional:    true,
 			Default:     true,
 			Description: "Wait until app is deployed",
+		},
+		"update_if_exists": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Update the app if it already exists in rancher but not terraform",
 		},
 	}
 

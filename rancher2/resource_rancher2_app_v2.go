@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -37,6 +38,7 @@ func resourceRancher2AppV2Create(d *schema.ResourceData, meta interface{}) error
 	repoName := d.Get("repo_name").(string)
 	chartName := d.Get("chart_name").(string)
 	chartVersion := d.Get("chart_version").(string)
+	updateIfExists := d.Get("update_if_exists").(bool)
 
 	log.Printf("[INFO] Creating App V2 %s at cluster ID %s", name, clusterID)
 
@@ -71,6 +73,10 @@ func resourceRancher2AppV2Create(d *schema.ResourceData, meta interface{}) error
 	}
 	err = appV2OperationWait(meta, clusterID, chartOperation.OperationNamespace+"/"+chartOperation.OperationName)
 	if err != nil {
+		if updateIfExists && strings.Contains(err.Error(), "INSTALLATION FAILED: cannot re-use a name that is still in use") {
+			log.Printf("[INFO] Creating App V2 %s failed with in-use error, retry as update %s", name, err)
+			return resourceRancher2AppV2Update(d, meta)
+		}
 		return fmt.Errorf("[ERROR] installing App V2: %s", err)
 	}
 	d.SetId(clusterID + appV2ClusterIDsep + chartInstallAction.Namespace + "/" + d.Get("name").(string))
